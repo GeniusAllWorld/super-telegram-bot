@@ -18,7 +18,10 @@ def get_level1_keyboard() -> InlineKeyboardMarkup:
         ("Exit", "cmd_exit")
     ]
     
-    for text, callback in buttons:
-        builder.row(InlineKeyboardButton(text=text, callback_data=callback))
-    
+    for i in range(0, len(buttons), 2):
+        row = []
+        for text, callback in buttons[i:i+2]:
+            row.append(InlineKeyboardButton(text=text, callback_data=callback))
+        builder.row(*row)
+        
     return builder.as_markup()

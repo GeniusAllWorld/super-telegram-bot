@@ -3,3 +3,10 @@ sqlalchemy
 aiosqlite
 python-dotenv
 pytz
+aiohttp
+qrcode
+Pillow
+apscheduler
+asyncpg
+translators
+simpleeval
