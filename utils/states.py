@@ -16,3 +16,10 @@ class Level2States(StatesGroup):
 
 class Level3States(StatesGroup):
     waiting_for_gif_query = State()
+    waiting_for_quiz_answer = State()
+    waiting_for_meme_photo = State()
+    waiting_for_meme_text = State()
+    waiting_for_text_to_analyze = State()
+    waiting_for_wiki_query = State()
+    waiting_for_video = State()
+    waiting_for_sticker = State()
