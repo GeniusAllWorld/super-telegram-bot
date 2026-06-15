@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-from levels.level1.avatar import AvatarStates # Импортируем состояния
+from levels.level1.avatar import  Level1States # Импортируем состояния
 
 router = Router()
 

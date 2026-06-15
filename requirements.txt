@@ -11,3 +11,4 @@ asyncpg
 translators
 simpleeval
 wikipedia-api
+psutil

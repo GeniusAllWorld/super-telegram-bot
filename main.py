@@ -33,7 +33,7 @@ async def main():
     dp.include_router(keyboards.main_menu.router)
 
     # Запускаем изолированный сервис планировщика
-    await init_scheduler()
+    await init_scheduler(bot)
 
     await dp.start_polling(bot)
 

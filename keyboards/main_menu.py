@@ -6,6 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from keyboards.level1_menu import get_level1_keyboard
 from keyboards.level2_menu import get_level2_keyboard
 from keyboards.level3_menu import get_level3_keyboard
+from keyboards.level4_menu import get_level4_keyboard
 
 router = Router()
 
@@ -28,6 +29,8 @@ async def level_selection_handler(callback: CallbackQuery):
         kb = get_level2_keyboard()
     elif level_num == 3:
         kb = get_level3_keyboard()
+    elif level_num == 4:
+        kb = get_level4_keyboard()
     else:
         # Заглушка для пока не созданных уровней
         await callback.answer("Уровень еще в разработке!")

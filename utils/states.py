@@ -1,6 +1,6 @@
 from aiogram.fsm.state import State, StatesGroup
 
-class AvatarStates(StatesGroup):
+class Level1States(StatesGroup):
     waiting_for_photo = State()
 
 class Level2States(StatesGroup):
@@ -23,3 +23,12 @@ class Level3States(StatesGroup):
     waiting_for_wiki_query = State()
     waiting_for_video = State()
     waiting_for_sticker = State()
+
+class Level4States(StatesGroup):
+    waiting_for_sql = State()
+    waiting_for_eval = State()
+    ai_chat = State()
+    waiting_for_voice = State()
+    waiting_for_photo = State()
+    waiting_for_wl_add = State()
+    waiting_for_wl_remove = State()

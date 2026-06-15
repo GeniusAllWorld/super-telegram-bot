@@ -4,6 +4,15 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger, unique=True, nullable=False)
+    username = Column(String, nullable=True)
+    # --- ДОБАВЛЯЕМ СЮДА ---
+    is_whitelisted = Column(Boolean, default=False)  # По умолчанию доступ закрыт
+
 class DBTimer(Base):
     __tablename__ = "bot_timers"
 
