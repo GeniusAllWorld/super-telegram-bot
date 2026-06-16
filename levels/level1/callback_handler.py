@@ -3,27 +3,29 @@ from aiogram.types import CallbackQuery
 
 router = Router()
 
-# Словарь для обработки callback-ов
+# Карта текстовых ответов для симуляции выполнения базовых команд первого уровня
+# Позволяет избежать отправки пользователя на ручной ввод команд
 CALLBACK_ACTIONS = {
-    "cmd_start": "/start",
-    "cmd_help": "/help",
-    "cmd_echo": "Просто напиши что-нибудь в чат!",
-    "cmd_ping": "/ping",
-    "cmd_userinfo": "/userinfo",
-    "cmd_time": "/time",
-    "cmd_chatinfo": "/chatinfo",
-    "cmd_avatar": "/avatar",
-    "cmd_version": "/version",
-    "cmd_exit": "/exit"
+    "cmd_start": "🚀 Бот запущен! Используйте главное меню для навигации по уровням.",
+    "cmd_help": "❓ Помощь: Этот бот разделен на 5 уровней сложности. Переключайтесь между ними в меню.",
+    "cmd_echo": "🗣 Режим Эхо: Просто напишите любое сообщение в чат, и бот повторит его.",
+    "cmd_ping": "🏓 Понг! Бот работает в штатном режиме.",
+    "cmd_userinfo": "👤 Информация: Чтобы получить полную сводку о своем профиле, отправьте команду /userinfo",
+    "cmd_time": "⏰ Точное время будет выведено в чат при отправке команды /time",
+    "cmd_chatinfo": "📊 Информация о чате доступна по прямой команде /chatinfo в группах.",
+    "cmd_avatar": "📸 Чтобы изменить аватарку группы, отправьте команду /avatar (доступно админу).",
+    "cmd_version": "🤖 Версия бота: 5.4.0 от 16.06.2026.",
+    "cmd_exit": "🚪 Выход: Для закрытия текущих сессий используйте команду /exit"
 }
 
+
+# Единый обработчик для всех инлайн-кнопок Первого Уровня
 @router.callback_query(F.data.in_(CALLBACK_ACTIONS.keys()))
 async def handle_level1_callbacks(callback: CallbackQuery):
-    action = CALLBACK_ACTIONS.get(callback.data)
+    action_text = CALLBACK_ACTIONS.get(callback.data)
     
-    # Если это команда (начинается с /), просим пользователя ввести её
-    if action.startswith("/"):
-        await callback.answer(f"Для этого используй команду {action}", show_alert=True)
-    else:
-        # Если это текстовое пояснение
-        await callback.answer(action, show_alert=True)
+    # Отправляем ответ новым сообщением в чат, чтобы сохранить историю и не заставлять юзера писать руками
+    await callback.message.answer(text=action_text)
+    
+    # Обязательно гасим часики на кнопке
+    await callback.answer()

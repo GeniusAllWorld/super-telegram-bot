@@ -1,5 +1,6 @@
 import os
 import re
+import html # Импортируем html для безопасного форматирования имен нарушителей
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from aiogram.exceptions import TelegramBadRequest
@@ -7,36 +8,41 @@ from config import ADMIN_ID
 
 router = Router()
 
-# Список запрещенных слов
+# Список запрещенных слов (нижний регистр)
 BAD_WORDS = ["скам", "крипта", "заработок", "бабки", "казино", "ставки", "vulkan"]
 
-# Регулярка для поиска ссылок
+# Регулярное выражение для поиска ссылок и юзернеймов/инвайтов
 URL_PATTERN = re.compile(
     r'(https?://[^\s]+)|(www\.[^\s]+)|(t\.me/[^\s]+)', 
     re.IGNORECASE
 )
 
-# 1. Срабатывает при нажатии на кнопку в админ-меню бота
-@router.callback_query(F.data == "cmd_antispam")
+
+# 1. Информационное окно антиспама в админ-меню
+@router.callback_query(F.data == "cmd_antispam_config")
 async def antispam_info_btn(callback: CallbackQuery):
-    # Традиционная проверка на админа для кнопки
+    # Проверка на главного разработчика/администратора
     if callback.from_user.id != ADMIN_ID:
         await callback.answer("❌ Доступ запрещен!", show_alert=True)
         return
 
     await callback.message.answer(
         "🛡 <b>Авто-удаление спама</b>\n\n"
-        "Эта функция работает только в группах!\n"
-        "Она автоматическая, просто добавьте бота в группу и дайте ему права Админа! 🤖",
+        "Эта функция работает автоматически в группах и супергруппах!\n"
+        "Просто добавьте бота в чат и выдайте ему права на <b>Удаление сообщений</b>. 🤖",
         parse_mode="HTML"
     )
     await callback.answer()
 
 
-# 2. Фоновый хендлер: работает ТОЛЬКО в группах и супергруппах
+# 2. Фоновый модератор: обрабатывает сообщения ТОЛЬКО в чатах, исключая личку
 @router.message(F.chat.type.in_({"group", "supergroup"}), F.text)
 async def filter_group_messages(message: Message):
-    # Если это пишет создатель бота (админ), игнорируем проверку
+    # ПОФИКСИЛИ БЕСКОНЕЧНЫЙ ЦИКЛ: Если сообщение прислал любой бот (включая этого), полностью игнорируем его
+    if message.from_user.is_bot:
+        return
+
+    # Если пишет создатель бота, отключаем для него фильтрацию
     if message.from_user.id == ADMIN_ID:
         return
 
@@ -44,32 +50,39 @@ async def filter_group_messages(message: Message):
     is_spam = False
     reason = ""
 
-    # Проверяем ссылки
+    # Анализируем текст на наличие внешних ссылок
     if URL_PATTERN.search(text_lower):
         is_spam = True
         reason = "размещение ссылок"
 
-    # Проверяем ключевые слова
+    # Анализируем текст на стоп-слова
     if not is_spam:
         for word in BAD_WORDS:
             if word in text_lower:
                 is_spam = True
-                reason = f"использование запрещенного слова '{word}'"
+                reason = f"использование запрещенного слова"
                 break
 
-    # Если нашли спам — удаляем
+    # Если триггер сработал — уничтожаем спам-контент
     if is_spam:
         try:
+            # Сначала удаляем запрещенное сообщение
             await message.delete()
             
-            # Тегаем спамера (если есть юзернейм) или пишем его имя
-            user_mention = f"@{message.from_user.username}" if message.from_user.username else message.from_user.full_name
+            # ПОФИКСИЛИ HTML-ИНЪЕКЦИЮ: Безопасно формируем упоминание, экранируя full_name нарушителя
+            if message.from_user.username:
+                user_mention = f"@{html.quote(message.from_user.username)}"
+            else:
+                user_mention = f"<b>{html.quote(message.from_user.full_name)}</b>"
             
+            # Отправляем предупреждение (в тексте больше нет уязвимого динамического {word}, вызывающего петлю)
             await message.answer(
                 f"⚠️ <b>Антиспам модератор</b>\n"
                 f"Сообщение от {user_mention} удалено.\n"
                 f"❌ Нарушение: {reason}."
+                f"Парсинг стоп-слов заблокирован.",
+                parse_mode="HTML"
             )
         except TelegramBadRequest:
-            # Сработает, если бота в группу добавили, а админку дать забыли
-            await message.answer("⚠️ Я вижу спам, но не могу его удалить! Дайте мне права Администратора.")
+            # Защита на случай, если бота добавили в группу без прав удаления сообщений
+            pass

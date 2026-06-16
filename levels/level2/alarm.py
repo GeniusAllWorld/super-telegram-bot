@@ -7,101 +7,133 @@ from utils.scheduler import scheduler
 
 from database.models import DBTimer
 from database.db import async_session_maker
-from levels.level2.timer import send_timer_alert # Переиспользуем функцию отправки!
+from levels.level2.timer import send_timer_alert
 from config import BOT_TOKEN
 
 router = Router()
 
+
+# Хэндлер нажатия на инлайн-кнопку установки будильника
 @router.callback_query(F.data == "cmd_alarm")
 async def start_alarm(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         "⏰ <b>Установка будильника</b>\n\n"
         "Введите дату, когда должен сработать будильник, в формате <code>ДД.ММ.ГГГГ</code>\n"
-        "Например: <code>14.06.2026</code>",
+        "Например: <code>16.06.2026</code>\n"
+        "Для отмены операции напишите <b>отмена</b>.",
         parse_mode="HTML"
     )
     await state.set_state(Level2States.waiting_for_alarm_date)
     await callback.answer()
 
 
+# Хэндлер обработки и валидации введенной пользователем даты
 @router.message(Level2States.waiting_for_alarm_date)
 async def process_alarm_date(message: Message, state: FSMContext):
     date_text = message.text.strip()
     
-    # Проверяем корректность формата даты
+    # Обработка ручной отмены операции
+    if date_text.lower() in ["отмена", "/cancel"]:
+        await state.clear()
+        await message.answer("❌ Установка будильника отменена.")
+        return
+    
     try:
-        valid_date = datetime.strptime(date_text, "%d.%m.%Y")
+        # Проверяем корректность формата даты
+        datetime.strptime(date_text, "%d.%m.%Y")
+        
         # Сохраняем чистую строку даты во временное хранилище FSM
         await state.update_data(alarm_date=date_text)
         
         await message.answer(
             "⏳ Отлично! Теперь введите время в формате <code>ЧЧ:ММ</code>\n"
-            "Например: <code>11:30</code>",
+            "Например: <code>15:30</code>",
             parse_mode="HTML"
         )
         await state.set_state(Level2States.waiting_for_alarm_time)
         
     except ValueError:
-        await message.answer("❌ Неверный формат даты! Пожалуйста, введите дату строго в формате <code>ДД.ММ.ГГГГ</code> (например: 14.06.2026):", parse_mode="HTML")
+        await message.answer(
+            "❌ Неверный формат даты! Пожалуйста, введите дату строго в формате <code>ДД.ММ.ГГГГ</code>:", 
+            parse_mode="HTML"
+        )
 
 
+# Хэндлер обработки времени, сборки финального datetime объекта и постановки таски в шедулер
 @router.message(Level2States.waiting_for_alarm_time)
 async def process_alarm_time(message: Message, state: FSMContext):
     time_text = message.text.strip()
+    
+    # Обработка ручной отмены операции
+    if time_text.lower() in ["отмена", "/cancel"]:
+        await state.clear()
+        await message.answer("❌ Установка будильника отменена.")
+        return
     
     # Достаем ранее введенную дату из FSM
     user_data = await state.get_data()
     date_text = user_data.get("alarm_date")
     
-    # Пробуем собрать полноценную дату и время вместе
+    # ПОФИКСИЛИ NameError: собираем финальную строку для парсинга из даты и времени
+    full_datetime_str = f"{date_text} {time_text}"
+    
     try:
-        full_datetime_str = f"{date_text} {time_text}"
-        trigger_time = datetime.strptime(full_datetime_str, "%d.%m.%Y %H:%M")
+        # Переводим склеенную строку в наивный datetime объект
+        naive_time = datetime.strptime(full_datetime_str, "%d.%m.%Y %H:%M")
         
-        # Проверяем, не в прошлом ли это время
-        if trigger_time < datetime.now():
+        # Присваиваем объекту таймзону планировщика (aware datetime) для корректной работы шедулера
+        trigger_time_tz = naive_time.replace(tzinfo=scheduler.timezone)
+
+        # Делаем копию для базы данных без tz info (для TIMESTAMP WITHOUT TIME ZONE)
+        trigger_time_db = trigger_time_tz.replace(tzinfo=None)
+
+        # Получаем текущее время с таймзоной для сверки
+        now_with_tz = datetime.now(scheduler.timezone)
+
+        # Проверяем, не пытается ли пользователь установить будильник в прошлое
+        if trigger_time_tz < now_with_tz:
             await message.answer("❌ Упс! Это время уже прошло. Введите корректное время в будущем (ЧЧ:ММ):")
             return
             
     except ValueError:
-        await message.answer("❌ Неверный формат времени! Пожалуйста, введите время строго в формате <code>ЧЧ:ММ</code> (например: 11:30):", parse_mode="HTML")
+        # ПОФИКСИЛИ UX: обрабатываем ошибку некорректного ввода времени, возвращая юзеру фидбек
+        await message.answer("❌ Неверный формат времени! Пожалуйста, введите время в формате <code>ЧЧ:ММ</code> (например, 18:45):", parse_mode="HTML")
         return
 
-    # Если всё ок — пишем в БД и шедулер
     try:
-        # 1. Запись в БД (используем ту же таблицу)
+        # 1. Запись в реляционную БД транзакционным методом
         async with async_session_maker() as session:
             async with session.begin():
                 new_alarm = DBTimer(
                     user_id=message.from_user.id,
                     chat_id=message.chat.id,
-                    trigger_time=trigger_time,
-                    minutes=None # Для будильника минуты не заполняем
+                    trigger_time=trigger_time_db,  # Улетает чистый datetime без tz, база счастлива
+                    minutes=None
                 )
                 session.add(new_alarm)
                 await session.flush()
                 alarm_id = new_alarm.id
 
-        # 2. Добавление задачи в APScheduler
+        # 2. Постановка фоновой задачи в APScheduler
         scheduler.add_job(
             send_timer_alert,
             trigger='date',
-            run_date=trigger_time,
+            run_date=trigger_time_tz,  # Передаем объект с часовым поясом для точного выстрела
             kwargs={
                 "bot_token": BOT_TOKEN,
                 "chat_id": message.chat.id,
                 "user_id": message.from_user.id,
-                "minutes": 0, # Передаем 0 или можно кастомизировать текст алерта
+                "minutes": 0,
                 "timer_id": alarm_id
             },
-            id=f"timer_{alarm_id}" # Используем тот же префикс, чтобы restore_timers в main подхватил его при перезапуске
+            id=f"timer_{alarm_id}"
         )
-        
+    
         await message.answer(
             f"🔔 <b>Будильник успешно установлен!</b>\n\n"
             f"📅 Дата: <code>{date_text}</code>\n"
             f"⏰ Время: <code>{time_text}</code>\n\n"
-            f"<i>Бот обязательно пришлет вам уведомление в указанное время.</i>",
+            f"<i>Бот пришлет вам уведомление точно в указанный срок.</i>",
             parse_mode="HTML"
         )
         await state.clear()

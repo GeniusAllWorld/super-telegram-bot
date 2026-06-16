@@ -5,8 +5,10 @@ from config import BOT_VERSION, BUILD_DATE
 
 router = Router()
 
+# Хэндлер вывода текущей версии программного обеспечения и даты релиза
 @router.message(Command("version"))
 async def cmd_version(message: Message):
+    # Отправляем системную информацию, подтягивая константы из главного конфигурационного файла
     await message.answer(
         f"🤖 <b>Версия бота:</b> <code>{BOT_VERSION}</code>\n"
         f"📅 <b>Дата сборки:</b> {BUILD_DATE}\n\n"

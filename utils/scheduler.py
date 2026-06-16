@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-import psutil  # Не забудь, что этот импорт теперь переехал сюда
+import psutil
 from datetime import datetime
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -10,8 +10,8 @@ from config import ADMIN_ID
 # Инициализируем планировщик глобально внутри этого модуля
 scheduler = AsyncIOScheduler()
 
+# Автоматический сбор статуса сервера и отправка админу (Cron)
 async def send_scheduled_report(bot: Bot):
-    """Автоматический сбор статуса сервера и отправка админу (Cron)"""
     cpu = psutil.cpu_percent()
     ram = psutil.virtual_memory().percent
     
@@ -27,18 +27,16 @@ async def send_scheduled_report(bot: Bot):
     except Exception as e:
         logging.error(f"❌ [Scheduler] Ошибка отправки cron-отчета: {e}")
 
-
-async def restore_timers():
-    """Функция восстановления недотикавших таймеров из БД при перезапуске"""
+# Функция восстановления недотикавших таймеров из БД при перезапуске бота
+async def restore_timers(bot: Bot):
     try:
         from database.db import async_session_maker
         from database.models import DBTimer
         from sqlalchemy import select
         from levels.level2.timer import send_timer_alert
         
-        bot_token = os.getenv("BOT_TOKEN")
-        
         async with async_session_maker() as session:
+            # Выбираем только те таймеры, которые еще не сработали
             stmt = select(DBTimer).where(DBTimer.is_triggered == False)
             result = await session.execute(stmt)
             active_timers = result.scalars().all()
@@ -47,14 +45,15 @@ async def restore_timers():
             count = 0
             
             for timer in active_timers:
+                # Если время таймера еще не наступило, пересоздаем задачу в APScheduler
                 if timer.trigger_time > now:
                     scheduler.add_job(
                         send_timer_alert,
                         trigger='date',
                         run_date=timer.trigger_time,
                         kwargs={
-                            "bot_token": bot_token,
-                            "chat_id": timer.chat_id,  # Исправил небольшую опечатку timer.chat.id -> timer.chat_id
+                            "bot": bot,  # Исправлено: передаем живой объект bot вместо строки токена
+                            "chat_id": timer.chat_id,
                             "user_id": timer.user_id,
                             "minutes": timer.minutes,
                             "timer_id": timer.id
@@ -69,24 +68,22 @@ async def restore_timers():
     except Exception as e:
         logging.error(f"❌ [Scheduler] Ошибка при восстановлении таймеров: {e}")
 
-
+# Полная инициализация, настройка задач и запуск планировщика
 async def init_scheduler(bot: Bot):
-    """Полная инициализация, настройка задач и запуск планировщика"""
     scheduler.configure(event_loop=asyncio.get_running_loop())
     
-    # --- ДОБАВЛЯЕМ НАШУ CRON ЗАДАЧУ СЮДА ---
-    # Будет триггериться каждые 5 минут. Для тестов каждую минуту можно поставить minute='*'
+    # Настройка Cron-задачи на отправку отчетов каждые 5 минут
     scheduler.add_job(
         send_scheduled_report,
         trigger='cron',
-        minute='*/5',
+        hour='*/1',
         kwargs={"bot": bot},
         id="server_health_report",
-        replace_existing=True  # Чтобы избежать дублирования при перезапусках в дебаге
+        replace_existing=True  # Предотвращает дублирование задачи при перезапуске кода
     )
     
     scheduler.start()
     logging.info("⏰ [Scheduler] APScheduler привязан к Event Loop и успешно запущен.")
     
-    # Сразу запускаем восстановление старых таймеров из БД
-    await restore_timers()
+    # Запускаем восстановление, передавая объект бота внутрь
+    await restore_timers(bot)

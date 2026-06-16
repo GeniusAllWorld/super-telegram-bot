@@ -1,10 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
 def get_level2_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
-    # Список методов Уровня 2: (текст_кнопки, callback_data)
+    # Список утилит уровня: (текст кнопки, callback_data)
     buttons = [
         ("🎲 Рандомайзер (1-N)", "cmd_random_num"),
         ("🔑 Генератор паролей", "cmd_password"),
@@ -16,13 +17,16 @@ def get_level2_keyboard() -> InlineKeyboardMarkup:
         ("⏰ Будильник", "cmd_alarm"),
         ("🗣 Переводчик текста", "cmd_translator"),
         ("+ Калькулятор", "cmd_calculator"),
-        ("⬅️ Назад в меню", "back_to_main")
     ]
     
-    for i in range(0, len(buttons), 2):
-        row = []
-        for text, callback in buttons[i:i+2]:
-            row.append(InlineKeyboardButton(text=text, callback_data=callback))
-        builder.row(*row)
+    # Добавляем кнопки всех инструментов в билдер
+    for text, callback in buttons:
+        builder.add(InlineKeyboardButton(text=text, callback_data=callback))
+        
+    # Выстраиваем инструменты аккуратной сеткой по 2 штуки в ряд
+    builder.adjust(2)
+    
+    # Кнопку возврата крепим отдельной строкой в самом низу
+    builder.row(InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="back_to_main"))
         
     return builder.as_markup()

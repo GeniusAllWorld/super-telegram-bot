@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Genius Системы: Уровень 5</title>
     <script src="https://telegram.org/js/telegram-webapps.js"></script>
     <style>
@@ -24,6 +24,8 @@
             align-items: center;
             min-height: 100vh;
             box-sizing: border-box;
+            /* Защита от случайного свайпа-закрытия Mini App на iOS */
+            overflow-x: hidden; 
         }
 
         h1 {
@@ -42,7 +44,7 @@
             text-align: center;
         }
 
-        /* Сетка для наших Sci-Fi модулей */
+        # Сетка для Sci-Fi модулей
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -52,7 +54,7 @@
             margin-bottom: 30px;
         }
 
-        /* Карточка модуля */
+        # Карточка модуля
         .card {
             background-color: var(--card-bg);
             border: 1px solid #222;
@@ -65,6 +67,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            /* Отключает выделение текста при частых тапах на смартфонах */
+            user-select: none; 
+            -webkit-user-select: none;
         }
 
         .card:hover, .card:active {
@@ -84,7 +89,7 @@
             color: #e0e0e0;
         }
 
-        /* Нижняя нативная кнопка закрытия */
+        # Нижняя нативная кнопка закрытия
         .close-btn {
             background: transparent;
             border: 1px solid #ff3366;
@@ -96,9 +101,12 @@
             font-weight: bold;
             transition: all 0.2s;
             margin-top: auto;
+            /* Безопасный отступ снизу для безрамочных экранов */
+            margin-bottom: env(safe-area-inset-bottom); 
         }
 
-        .close-btn:hidden {
+        # Исправлено: корректный класс для скрытия кнопки через CSS
+        .close-btn.hidden {
             display: none;
         }
     </style>
@@ -165,31 +173,31 @@
     <button class="close-btn" onclick="closeApp()">ВЫХОД</button>
 
     <script>
+        // Инициализация Telegram WebApp API
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        // Настраиваем цвета под тему Телеграма для нативности
+        tg.expand(); // Разворачиваем приложение на весь экран смартфона
         tg.ready();
 
+        // Закрытие мини-приложения и возврат в чат с ботом
         function closeApp() {
             tg.close();
         }
 
+        // Логика запуска выбранного Sci-Fi модуля
         function openModule(moduleNum) {
-            // Функция-заглушка для перехода к конкретному модулю
             alert(`Запуск Модуля ${moduleNum}... Ресурсы активируются.`);
-            // В следующих шагах мы настроим скрытие меню и показ экрана нужной игры/фичи
         }
     </script>
 
     <script>
-        // Проверяем, если мы наткнулись на страницу ngrok-warning
+        // Скрипт автоматического обхода предупреждения Ngrok
         window.onload = function() {
-            // Ищем кнопку ngrok по её стандартному селектору и кликаем
-            const ngrokBtn = document.querySelector('a.btn-primary') || document.querySelector('#bypass');
-            if (ngrokBtn) {
-                ngrokBtn.click();
-            }
+            setTimeout(function() {
+                const ngrokBtn = document.querySelector('a.btn-primary') || document.querySelector('#bypass');
+                if (ngrokBtn) {
+                    ngrokBtn.click();
+                }
+            }, 100); // Небольшая задержка в 100мс для гарантированной отрисовки DOM ngrok
         };
     </script>
 </body>

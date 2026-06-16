@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def get_level1_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
-    # Список методов: (текст_кнопки, callback_data)
+    # Список базовых функций уровня: (текст кнопки, callback_data)
     buttons = [
         ("Start", "cmd_start"),
         ("Help", "cmd_help"),
@@ -16,13 +16,16 @@ def get_level1_keyboard() -> InlineKeyboardMarkup:
         ("Avatar", "cmd_avatar"),
         ("Version", "cmd_version"),
         ("Exit", "cmd_exit"),
-        ("⬅️ Назад в меню", "back_to_main")
     ]
     
-    for i in range(0, len(buttons), 2):
-        row = []
-        for text, callback in buttons[i:i+2]:
-            row.append(InlineKeyboardButton(text=text, callback_data=callback))
-        builder.row(*row)
+    # Массово добавляем кнопки основных функций
+    for text, callback in buttons:
+        builder.add(InlineKeyboardButton(text=text, callback_data=callback))
+        
+    # Формируем сетку: строго по 2 кнопки в ряд для основных функций
+    builder.adjust(2)
+    
+    # Добавляем кнопку "Назад" отдельным рядом в самый конец клавиатуры
+    builder.row(InlineKeyboardButton(text="⬅️ Назад в меню", callback_data="back_to_main"))
         
     return builder.as_markup()
