@@ -15,7 +15,8 @@ def get_level2_keyboard() -> InlineKeyboardMarkup:
         ("⏳ Таймер (X минут)", "cmd_timer"),
         ("⏰ Будильник", "cmd_alarm"),
         ("🗣 Переводчик текста", "cmd_translator"),
-        ("+ Калькулятор", "cmd_calculator")
+        ("+ Калькулятор", "cmd_calculator"),
+        ("⬅️ Назад в меню", "back_to_main")
     ]
     
     for i in range(0, len(buttons), 2):

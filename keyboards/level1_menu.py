@@ -15,7 +15,8 @@ def get_level1_keyboard() -> InlineKeyboardMarkup:
         ("Chat Info", "cmd_chatinfo"),
         ("Avatar", "cmd_avatar"),
         ("Version", "cmd_version"),
-        ("Exit", "cmd_exit")
+        ("Exit", "cmd_exit"),
+        ("⬅️ Назад в меню", "back_to_main")
     ]
     
     for i in range(0, len(buttons), 2):

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Системы: Уровень 5</title>
+    <script src="https://telegram.org/js/telegram-webapps.js"></script>
+    <style>
+        :root {
+            --neon-green: #00ff66;
+            --neon-blue: #00ffff;
+            --dark-bg: #0d0e15;
+            --card-bg: #141622;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--neon-green);
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            text-shadow: 0 0 10px var(--neon-green);
+            margin-bottom: 5px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        /* Сетка для наших Sci-Fi модулей */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        /* Карточка модуля */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card:hover, .card:active {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        /* Нижняя нативная кнопка закрытия */
+        .close-btn {
+            background: transparent;
+            border: 1px solid #ff3366;
+            color: #ff3366;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            margin-top: auto;
+        }
+
+        .close-btn:hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⚡ QUANTUM SYSTEMS</h1>
+    <div class="subtitle">Уровень 5: Выберите Sci-Fi модуль</div>
+
+    <div class="grid-container">
+        
+        <div class="card" onclick="openModule(41)">
+            <div class="card-icon">📏</div>
+            <div class="card-title">AR-Линейка</div>
+        </div>
+
+        <div class="card" onclick="openModule(42)">
+            <div class="card-icon">🎵</div>
+            <div class="card-title">Нейро-Музыка</div>
+        </div>
+
+        <div class="card" onclick="openModule(43)">
+            <div class="card-icon">💎</div>
+            <div class="card-title">3D-Вьюер</div>
+        </div>
+
+        <div class="card" onclick="openModule(44)">
+            <div class="card-icon">⚛️</div>
+            <div class="card-title">Квантовое запутывание</div>
+        </div>
+
+        <div class="card" onclick="openModule(45)">
+            <div class="card-icon">🤫</div>
+            <div class="card-title">Детектор лжи</div>
+        </div>
+
+        <div class="card" onclick="openModule(46)">
+            <div class="card-icon">💤</div>
+            <div class="card-title">Генератор снов</div>
+        </div>
+
+        <div class="card" onclick="openModule(47)">
+            <div class="card-icon">⏳</div>
+            <div class="card-title">Блокировщик фокуса</div>
+        </div>
+
+        <div class="card" onclick="openModule(48)">
+            <div class="card-icon">🎮</div>
+            <div class="card-title">Ретро-Консоль</div>
+        </div>
+
+        <div class="card" onclick="openModule(49)">
+            <div class="card-icon">🔬</div>
+            <div class="card-title">Микроскоп данных</div>
+        </div>
+
+        <div class="card" onclick="openModule(50)">
+            <div class="card-icon">💀</div>
+            <div class="card-title">Атомный конец</div>
+        </div>
+
+    </div>
+
+    <button class="close-btn" onclick="closeApp()">ВЫХОД</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        // Настраиваем цвета под тему Телеграма для нативности
+        tg.ready();
+
+        function closeApp() {
+            tg.close();
+        }
+
+        function openModule(moduleNum) {
+            // Функция-заглушка для перехода к конкретному модулю
+            alert(`Запуск Модуля ${moduleNum}... Ресурсы активируются.`);
+            // В следующих шагах мы настроим скрытие меню и показ экрана нужной игры/фичи
+        }
+    </script>
+
+    <script>
+        // Проверяем, если мы наткнулись на страницу ngrok-warning
+        window.onload = function() {
+            // Ищем кнопку ngrok по её стандартному селектору и кликаем
+            const ngrokBtn = document.querySelector('a.btn-primary') || document.querySelector('#bypass');
+            if (ngrokBtn) {
+                ngrokBtn.click();
+            }
+        };
+    </script>
+</body>
+</html>

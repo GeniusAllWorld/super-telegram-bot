@@ -5,6 +5,7 @@ import pkgutil
 from aiogram import Bot, Dispatcher
 from config import BOT_TOKEN
 from utils.scheduler import init_scheduler  # Импортируем наш инициализатор
+from utils.web_server import init_web_server
 
 import keyboards.main_menu
 
@@ -35,6 +36,9 @@ async def main():
     # Запускаем изолированный сервис планировщика
     await init_scheduler(bot)
 
+    # Запускаем локальный веб-сервер для Mini Apps
+    await init_web_server()
+    
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

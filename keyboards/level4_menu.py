@@ -15,7 +15,8 @@ def get_level4_keyboard() -> InlineKeyboardMarkup:
         ("👁 Текст с фото (OCR)", "cmd_tesseract_ocr"),
         ("🛡 Антиспам фильтр", "cmd_antispam_config"),
         ("📝 Белый список (БД)", "cmd_whitelist_manager"),
-        ("⏰ Планировщик задач", "cmd_cron_scheduler")
+        ("⏰ Планировщик задач", "cmd_cron_scheduler"),
+        ("⬅️ Назад в меню", "back_to_main")
     ]
     
     # Расставляем красиво по 2 в ряд

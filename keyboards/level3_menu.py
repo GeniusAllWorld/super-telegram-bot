@@ -15,7 +15,8 @@ def get_level3_keyboard() -> InlineKeyboardMarkup:
         ("📖 Википедия", "cmd_wiki"),
         ("🎧 Видео в аудио", "cmd_video_to_audio"),
         ("🏷 Инфо о стикерах", "cmd_sticker_info"),
-        ("✨ Генератор имен", "cmd_name_gen")
+        ("✨ Генератор имен", "cmd_name_gen"),
+        ("⬅️ Назад в меню", "back_to_main")
     ]
     
     # Расставляем кнопки по 2 в ряд, чтобы меню не было бесконечно длинным
