@@ -128,6 +128,8 @@ venv\Scripts\activate
 
 source venv/bin/activate
 
+# После активации виртуального окружения
+
 Установите зависимости:
 
 pip install -r requirements.txt
